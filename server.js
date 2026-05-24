@@ -24,26 +24,43 @@ app.get("/webhook", (req, res) => {
 });
 
 async function askGemini(userMessage) {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `You are Nevorai AI assistant. You help businesses manage leads, automate WhatsApp communication, track calls, and grow their business. Be helpful, friendly and concise. User says: ${userMessage}`
-              }
-            ]
-          }
-        ]
-      })
-    }
-  );
-  const data = await response.json();
-  return data.candidates[0].content.parts[0].text;
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: userMessage,
+                },
+              ],
+            },
+          ],
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    console.log("Gemini response:", JSON.stringify(result, null, 2));
+
+    const aiReply =
+      result?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "Sorry, I could not understand that.";
+
+    return aiReply;
+
+  } catch (error) {
+    console.log(error);
+
+    return "AI temporarily unavailable.";
+  }
 }
 
 app.post("/webhook", async (req, res) => {
