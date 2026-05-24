@@ -3,23 +3,19 @@ const fetch = require("node-fetch");
 require("dotenv").config();
 
 const app = express();
-
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("Nevorai WhatsApp API Running");
+  res.send("Nevorai WhatsApp AI Running");
 });
 
 app.get("/webhook", (req, res) => {
   const verify_token = "nevorai123";
-
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
-
   if (mode && token) {
     if (mode === "subscribe" && token === verify_token) {
-      console.log("WEBHOOK VERIFIED");
       res.status(200).send(challenge);
     } else {
       res.sendStatus(403);
@@ -27,20 +23,40 @@ app.get("/webhook", (req, res) => {
   }
 });
 
+async function askGemini(userMessage) {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: `You are Nevorai AI assistant. You help businesses manage leads, automate WhatsApp communication, track calls, and grow their business. Be helpful, friendly and concise. User says: ${userMessage}`
+              }
+            ]
+          }
+        ]
+      })
+    }
+  );
+  const data = await response.json();
+  return data.candidates[0].content.parts[0].text;
+}
+
 app.post("/webhook", async (req, res) => {
-  console.log("Webhook received:");
-  console.log(JSON.stringify(req.body, null, 2));
-
   try {
-    const message =
-      req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-
-    if (message) {
+    const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    if (message && message.type === "text") {
       const from = message.from;
+      const userText = message.text.body;
+      console.log("Message from:", from, "Text:", userText);
 
-      console.log("Message from:", from);
+      const aiReply = await askGemini(userText);
 
-      const response = await fetch(
+      await fetch(
         `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
         {
           method: "POST",
@@ -51,18 +67,12 @@ app.post("/webhook", async (req, res) => {
           body: JSON.stringify({
             messaging_product: "whatsapp",
             to: from,
-            text: {
-              body: "Welcome to Nevorai 🚀",
-            },
+            text: { body: aiReply },
           }),
         }
       );
-
-      const data = await response.json();
-
-      console.log("Reply sent:", data);
+      console.log("AI reply sent!");
     }
-
     res.sendStatus(200);
   } catch (error) {
     console.error(error);
@@ -71,5 +81,5 @@ app.post("/webhook", async (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log("Server running on port 3000");
+  console.log("Nevorai AI Server running on port 3000");
 });
