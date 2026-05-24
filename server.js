@@ -8,10 +8,10 @@ app.use(express.json());
 const BRAND_NAME = process.env.BRAND_NAME || "Nevorai";
 
 const NEVORAI_APP_LINK =
-  process.env.NEVORAI_APP_LINK || "https://nevereis.com";
+  process.env.NEVORAI_APP_LINK || "https://nevorai.com";
 
 const NEVORAI_CALL_LINK =
-  process.env.NEVORAI_CALL_LINK || "https://call.nevereiscall.com";
+  process.env.NEVORAI_CALL_LINK || "https://call.nevorai.com";
 
 const NEVORAI_BASIC_PRICE =
   process.env.NEVORAI_BASIC_PRICE || "₹149/month";
@@ -66,8 +66,6 @@ function getRuleBasedReply(userMessage) {
       "what is neverai",
       "about neverai",
       "tell me about neverai",
-      "what is nevereis",
-      "about nevereis",
     ])
   ) {
     return `${BRAND_NAME} has two main products:
@@ -85,7 +83,6 @@ You can visit: ${NEVORAI_APP_LINK}`;
     includesAny(text, [
       "nevorai call",
       "neverai call",
-      "nevereis call",
       "call app",
       "calling app",
       "call tracking",
@@ -104,7 +101,6 @@ Visit: ${NEVORAI_CALL_LINK}`;
     includesAny(text, [
       "nevorai app",
       "neverai app",
-      "nevereis app",
       "video funnel",
       "funnel",
       "landing page",
